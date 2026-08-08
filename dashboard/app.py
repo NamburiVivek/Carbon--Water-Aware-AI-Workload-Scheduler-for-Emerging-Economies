@@ -42,6 +42,14 @@ COLOR_BORDER = "#F1DFC4"        # warm neutral border
 COLOR_TEXT = "#292118"          # primary body text (warm charcoal)
 COLOR_TEXT_MUTED = "#8A7860"    # muted warm grey-brown
 
+# Chart panels use a dark background + light text — this stays legible
+# regardless of the visitor's browser/OS theme (Streamlit's automatic
+# chart theming otherwise silently overrides light-mode chart colours).
+CHART_BG = "#1C140B"
+CHART_GRID = "rgba(255,255,255,0.10)"
+CHART_FONT = "#F5F1E8"
+CHART_MUTED = "#C9BBA5"
+
 
 def api_get(endpoint):
     response = requests.get(
@@ -95,6 +103,13 @@ st.markdown(f"""
 
 html, body, [class*="css"] {{
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}}
+
+/* Override Streamlit's core theme accent variable so native widgets
+   (sliders, checkboxes, radios, focus rings) follow it automatically,
+   instead of relying only on DOM-structure guesses below. */
+:root, .stApp {{
+    --primary-color: {COLOR_GRAD_END} !important;
 }}
 
 /* ── Force one consistent light background app-wide (prevents it clashing
@@ -248,14 +263,18 @@ div.stButton > button[kind="secondary"]:hover {{
     color: {COLOR_PRIMARY} !important;
 }}
 
-/* Sliders (BaseWeb) */
-div[data-baseweb="slider"] div[role="slider"] {{
+/* Sliders (BaseWeb) — fallback in case the --primary-color variable
+   above isn't picked up by this Streamlit version */
+div[data-testid="stSlider"] div[role="slider"] {{
     background-color: {COLOR_GRAD_END} !important;
     border-color: {COLOR_GRAD_END} !important;
     box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15) !important;
 }}
-div[data-baseweb="slider"] > div > div:nth-child(2) {{
+div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div {{
     background: linear-gradient(90deg, {COLOR_GRAD_START}, {COLOR_GRAD_END}) !important;
+}}
+div[data-testid="stSlider"] div[data-baseweb="slider"] > div > div:first-child {{
+    background: {COLOR_BORDER} !important;
 }}
 [data-testid="stTickBarMin"], [data-testid="stTickBarMax"] {{
     color: {COLOR_TEXT_MUTED} !important;
@@ -447,7 +466,7 @@ zone_to_region = {cfg.grid_zone: rname for rname, cfg in settings.regions.items(
 carbon_df["region"] = carbon_df["zone"].map(zone_to_region)
 renewable_df["region"] = renewable_df["zone"].map(zone_to_region)
 
-REGION_COLOR_SEQUENCE = ["#F97316", "#FBBF24", "#DC2626", "#7C2D12", "#FB923C", "#B45309"]
+REGION_COLOR_SEQUENCE = ["#F97316", "#FBBF24", "#EF4444", "#FB923C", "#FDE047", "#F87171"]
 
 tab_c, tab_r, tab_w = st.tabs(["Carbon Intensity", "Renewable Mix", "Water Stress"])
 
@@ -460,12 +479,16 @@ with tab_c:
         color_discrete_sequence=REGION_COLOR_SEQUENCE,
     )
     fig.add_hline(y=settings.constraints.max_carbon_intensity, line_dash="dash",
-                  line_color=COLOR_DANGER, annotation_text="Hard cap")
-    fig.add_hline(y=250, line_dash="dot", line_color=COLOR_WARN, annotation_text="Preferred max")
-    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                       font=dict(family="Inter, sans-serif", color="#334155"),
-                       legend_title_text="")
-    st.plotly_chart(fig, use_container_width=True)
+                  line_color="#EF4444", annotation_text="Hard cap")
+    fig.add_hline(y=250, line_dash="dot", line_color="#FBBF24", annotation_text="Preferred max")
+    fig.update_layout(
+        plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
+        font=dict(family="Inter, sans-serif", color=CHART_FONT),
+        legend_title_text="",
+        xaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+        yaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+    )
+    st.plotly_chart(fig, use_container_width=True, theme=None)
 
 with tab_r:
     fig2 = px.area(
@@ -475,11 +498,15 @@ with tab_r:
         height=380,
         color_discrete_sequence=REGION_COLOR_SEQUENCE,
     )
-    fig2.add_hline(y=60, line_dash="dot", line_color=COLOR_ACCENT, annotation_text="60% preferred")
-    fig2.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                        font=dict(family="Inter, sans-serif", color="#334155"),
-                        legend_title_text="")
-    st.plotly_chart(fig2, use_container_width=True)
+    fig2.add_hline(y=60, line_dash="dot", line_color="#FDE047", annotation_text="60% preferred")
+    fig2.update_layout(
+        plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
+        font=dict(family="Inter, sans-serif", color=CHART_FONT),
+        legend_title_text="",
+        xaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+        yaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+    )
+    st.plotly_chart(fig2, use_container_width=True, theme=None)
 
 with tab_w:
     water_rows = []
@@ -490,15 +517,19 @@ with tab_w:
     wdf = pd.DataFrame(water_rows).sort_values("Stress")
     fig3 = px.bar(
         wdf, x="Region", y="Stress", color="Stress",
-        color_continuous_scale=[COLOR_PRIMARY_DARK, COLOR_PRIMARY, COLOR_DANGER],
+        color_continuous_scale=["#FBBF24", "#F97316", "#EF4444"],
         title="Current Water Stress by Region",
         range_color=[0, 1], height=350,
     )
     fig3.add_hline(y=settings.constraints.max_water_stress, line_dash="dash",
-                   line_color=COLOR_DANGER, annotation_text="Hard limit")
-    fig3.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                        font=dict(family="Inter, sans-serif", color="#334155"))
-    st.plotly_chart(fig3, use_container_width=True)
+                   line_color="#EF4444", annotation_text="Hard limit")
+    fig3.update_layout(
+        plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
+        font=dict(family="Inter, sans-serif", color=CHART_FONT),
+        xaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+        yaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+    )
+    st.plotly_chart(fig3, use_container_width=True, theme=None)
 
 st.markdown("---")
 
@@ -528,24 +559,27 @@ if carbon_budget._ceiling > 0:
     gauge = go.Figure(go.Indicator(
         mode="gauge+number+delta",
         value=util,
-        title={"text": f"Budget Utilisation — {bsummary['period']}"},
-        delta={"reference": 80, "increasing": {"color": COLOR_DANGER}},
+        title={"text": f"Budget Utilisation — {bsummary['period']}", "font": {"color": CHART_FONT}},
+        delta={"reference": 80, "increasing": {"color": "#EF4444"}, "font": {"color": CHART_FONT}},
         gauge={
-            "axis": {"range": [0, 100]},
+            "axis": {"range": [0, 100], "tickcolor": CHART_MUTED, "tickfont": {"color": CHART_MUTED}},
             "bar": {"color": COLOR_PRIMARY},
+            "bgcolor": CHART_BG,
+            "bordercolor": CHART_GRID,
             "steps": [
-                {"range": [0, 60], "color": "#FEF3C7"},
-                {"range": [60, 80], "color": "#FDBA74"},
-                {"range": [80, 100], "color": "#FCA5A5"},
+                {"range": [0, 60], "color": "#3A2A12"},
+                {"range": [60, 80], "color": "#5A3A14"},
+                {"range": [80, 100], "color": "#5A1E1E"},
             ],
-            "threshold": {"line": {"color": COLOR_DANGER, "width": 4}, "value": 90},
+            "threshold": {"line": {"color": "#EF4444", "width": 4}, "value": 90},
         },
-        number={"suffix": "%"},
+        number={"suffix": "%", "font": {"color": CHART_FONT}},
     ))
-    gauge.update_layout(height=280, font=dict(family="Inter, sans-serif"))
+    gauge.update_layout(height=280, font=dict(family="Inter, sans-serif", color=CHART_FONT),
+                         paper_bgcolor=CHART_BG, plot_bgcolor=CHART_BG)
     bcol1, bcol2 = st.columns([1, 2])
     with bcol1:
-        st.plotly_chart(gauge, use_container_width=True)
+        st.plotly_chart(gauge, use_container_width=True, theme=None)
     with bcol2:
         st.metric("Ceiling", f"{bsummary['ceiling_gco2']/1000:.1f} kgCO₂")
         st.metric("Spent", f"{bsummary['spent_gco2']/1000:.2f} kgCO₂")
@@ -646,15 +680,19 @@ if st.button("Run GreenScheduler", type="primary", use_container_width=True):
             fig_cmp = px.bar(
                 cmp_df, x="Scheduler", y="Carbon (gCO₂/kWh)",
                 color="Scheduler", color_discrete_map={
-                    "GreenScheduler": COLOR_ACCENT,
-                    "Naive (immediate)": COLOR_DANGER,
+                    "GreenScheduler": "#F97316",
+                    "Naive (immediate)": "#EF4444",
                 },
                 title="Carbon Intensity: GreenScheduler vs Naive",
                 height=300,
             )
-            fig_cmp.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                                   font=dict(family="Inter, sans-serif", color="#334155"))
-            st.plotly_chart(fig_cmp, use_container_width=True)
+            fig_cmp.update_layout(
+                plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
+                font=dict(family="Inter, sans-serif", color=CHART_FONT),
+                xaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+                yaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+            )
+            st.plotly_chart(fig_cmp, use_container_width=True, theme=None)
 
         # Score breakdown
         with st.expander("Score breakdown"):
@@ -666,11 +704,15 @@ if st.button("Run GreenScheduler", type="primary", use_container_width=True):
                 {"Component": "Community", "Contribution": round(b.community_contribution, 4)},
             ])
             fig_bd = px.bar(bd_df, x="Component", y="Contribution", color="Contribution",
-                            color_continuous_scale=[COLOR_ACCENT, "white", COLOR_DANGER],
+                            color_continuous_scale=["#FBBF24", CHART_MUTED, "#EF4444"],
                             title="Score Component Breakdown (negative = good)", height=280)
-            fig_bd.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                                  font=dict(family="Inter, sans-serif", color="#334155"))
-            st.plotly_chart(fig_bd, use_container_width=True)
+            fig_bd.update_layout(
+                plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
+                font=dict(family="Inter, sans-serif", color=CHART_FONT),
+                xaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+                yaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+            )
+            st.plotly_chart(fig_bd, use_container_width=True, theme=None)
 
         # Top candidates table
         st.markdown("##### Top Candidate Windows")
@@ -715,9 +757,13 @@ if st.button("Run GreenScheduler", type="primary", use_container_width=True):
                 height=380,
                 color_discrete_sequence=REGION_COLOR_SEQUENCE,
             )
-            fig_tl.update_layout(plot_bgcolor="white", paper_bgcolor="white",
-                                  font=dict(family="Inter, sans-serif", color="#334155"))
-            st.plotly_chart(fig_tl, use_container_width=True)
+            fig_tl.update_layout(
+                plot_bgcolor=CHART_BG, paper_bgcolor=CHART_BG,
+                font=dict(family="Inter, sans-serif", color=CHART_FONT),
+                xaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+                yaxis=dict(gridcolor=CHART_GRID, zerolinecolor=CHART_GRID, color=CHART_MUTED),
+            )
+            st.plotly_chart(fig_tl, use_container_width=True, theme=None)
 
     else:
         st.error(result.explanation())
