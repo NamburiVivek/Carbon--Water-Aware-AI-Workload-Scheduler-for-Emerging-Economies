@@ -28,16 +28,16 @@ import requests
 
 API_BASE_URL = "https://carbon-water-aware-ai-workload-sche.vercel.app"
 
-# ── Professional colour palette ────────────────────────────────────────────
-COLOR_PRIMARY = "#2563EB"      # slate blue — primary accent
-COLOR_PRIMARY_DARK = "#1E3A5F"  # deep navy — headers, borders
-COLOR_ACCENT = "#0EA5A0"       # teal — positive / green signals
+# ── Black & yellow colour palette ──────────────────────────────────────────
+COLOR_PRIMARY = "#F5C518"      # signal yellow — primary accent
+COLOR_PRIMARY_DARK = "#0A0A0A"  # near-black — headers, borders
+COLOR_ACCENT = "#F5C518"       # yellow — positive / green signals
 COLOR_WARN = "#D97706"         # amber — caution
-COLOR_DANGER = "#DC2626"       # red — hard limits / negative
-COLOR_BG_CARD = "#F8FAFC"      # near-white card background
-COLOR_BG_CARD_DARK = "#0F172A"  # dark card background (for dark theme)
-COLOR_BORDER = "#E2E8F0"
-COLOR_TEXT_MUTED = "#64748B"
+COLOR_DANGER = "#E53935"       # red — hard limits / negative
+COLOR_BG_CARD = "#FAFAF7"      # warm off-white card background
+COLOR_BG_CARD_DARK = "#111111"  # dark card background (for dark theme)
+COLOR_BORDER = "#1A1A1A"
+COLOR_TEXT_MUTED = "#5C5C5C"
 
 
 def api_get(endpoint):
@@ -96,75 +96,80 @@ html, body, [class*="css"] {{
 
 /* Header */
 .dashboard-header {{
-    padding: 18px 24px;
-    background: linear-gradient(135deg, {COLOR_PRIMARY_DARK} 0%, #14213D 100%);
+    padding: 20px 24px;
+    background: {COLOR_PRIMARY_DARK};
     border-radius: 10px;
     margin-bottom: 18px;
-    border: 1px solid #1F2E4A;
+    border: 1px solid {COLOR_PRIMARY_DARK};
+    border-left: 5px solid {COLOR_PRIMARY};
 }}
 .dashboard-header h1 {{
     margin: 0;
     font-size: 1.6rem;
     font-weight: 700;
-    color: #F1F5F9;
+    color: {COLOR_PRIMARY};
     letter-spacing: -0.01em;
 }}
 .dashboard-header p {{
     margin: 4px 0 0 0;
     font-size: 0.9rem;
-    color: #94A3B8;
+    color: #CFCFCF;
 }}
 
 /* Section headers */
 .section-label {{
     font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.08em;
+    font-weight: 700;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    color: {COLOR_TEXT_MUTED};
-    margin-bottom: 2px;
+    color: {COLOR_PRIMARY_DARK};
+    margin-bottom: 6px;
+    padding-bottom: 4px;
+    border-bottom: 2px solid {COLOR_PRIMARY};
+    display: inline-block;
 }}
 
 /* Metric / region cards */
 .region-card {{
-    border: 1px solid {COLOR_BORDER};
+    border: 1px solid #E5E5DE;
     border-radius: 10px;
     padding: 14px 16px;
     margin: 4px 0;
     background: white;
-    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
     transition: box-shadow 0.15s ease;
 }}
 .region-card.leading {{
-    border-left: 3px solid {COLOR_ACCENT};
-    box-shadow: 0 2px 6px rgba(14, 165, 160, 0.12);
+    border: 1px solid {COLOR_PRIMARY_DARK};
+    border-left: 4px solid {COLOR_PRIMARY};
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
 }}
 .region-card .region-name {{
-    font-weight: 600;
+    font-weight: 700;
     font-size: 0.95rem;
-    color: #0F172A;
+    color: {COLOR_PRIMARY_DARK};
 }}
 .region-card .badge {{
     display: inline-block;
-    font-size: 0.68rem;
-    font-weight: 600;
-    letter-spacing: 0.03em;
+    font-size: 0.66rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: {COLOR_ACCENT};
-    background: rgba(14, 165, 160, 0.1);
-    padding: 2px 8px;
-    border-radius: 20px;
+    color: {COLOR_PRIMARY_DARK};
+    background: {COLOR_PRIMARY};
+    padding: 2px 9px;
+    border-radius: 3px;
     margin-left: 6px;
 }}
 .region-card .metric-row {{
     font-size: 0.85rem;
-    color: #334155;
+    color: #333333;
     margin-top: 6px;
     line-height: 1.6;
 }}
 .region-card .metric-row b {{
     font-family: 'IBM Plex Mono', monospace;
-    color: #0F172A;
+    color: {COLOR_PRIMARY_DARK};
 }}
 
 .metric-card {{
@@ -172,7 +177,10 @@ html, body, [class*="css"] {{
     border-radius: 10px;
     padding: 16px;
     margin: 4px;
-    border-left: 3px solid {COLOR_ACCENT};
+    border-left: 4px solid {COLOR_PRIMARY};
+    border-top: 1px solid #E5E5DE;
+    border-right: 1px solid #E5E5DE;
+    border-bottom: 1px solid #E5E5DE;
 }}
 .impact-number {{
     font-family: 'IBM Plex Mono', monospace;
@@ -186,12 +194,26 @@ html, body, [class*="css"] {{
 }}
 
 hr {{
-    border-color: {COLOR_BORDER} !important;
+    border-color: #E5E5DE !important;
+}}
+
+/* Buttons */
+div.stButton > button[kind="primary"] {{
+    background-color: {COLOR_PRIMARY};
+    color: {COLOR_PRIMARY_DARK};
+    border: 1px solid {COLOR_PRIMARY_DARK};
+    font-weight: 700;
+}}
+div.stButton > button[kind="primary"]:hover {{
+    background-color: {COLOR_PRIMARY_DARK};
+    color: {COLOR_PRIMARY};
+    border: 1px solid {COLOR_PRIMARY_DARK};
 }}
 
 /* Sidebar */
 section[data-testid="stSidebar"] {{
-    border-right: 1px solid {COLOR_BORDER};
+    border-right: 2px solid {COLOR_PRIMARY_DARK};
+    background: #FDFDFB;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -220,10 +242,10 @@ engine = load_engine()
 water_service = WaterDataService()
 
 st.sidebar.markdown(
-    """
-    <div style="padding-bottom: 4px;">
-        <div style="font-size:1.15rem; font-weight:700; color:#0F172A;">GreenScheduler</div>
-        <div style="font-size:0.78rem; color:#64748B;">Sustainability Operations Console</div>
+    f"""
+    <div style="padding: 10px 12px; background:{COLOR_PRIMARY_DARK}; border-radius:8px; border-left: 4px solid {COLOR_PRIMARY}; margin-bottom: 4px;">
+        <div style="font-size:1.1rem; font-weight:700; color:{COLOR_PRIMARY};">GreenScheduler</div>
+        <div style="font-size:0.76rem; color:#CFCFCF;">Sustainability Operations Console</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -310,7 +332,7 @@ for i, row in env_df.iterrows():
     idx = env_df.index.get_loc(i)
     with cols[idx]:
         card_class = "region-card leading" if idx == 0 else "region-card"
-        badge = '<span class="badge">Top ranked</span>' if idx == 0 else ""
+        badge = '<span class="badge">★ Top ranked</span>' if idx == 0 else ""
         drought_note = f" · Drought alert" if row["Drought Alert"] == "Yes" else ""
         st.markdown(
             f"""<div class="{card_class}">
@@ -336,7 +358,7 @@ zone_to_region = {cfg.grid_zone: rname for rname, cfg in settings.regions.items(
 carbon_df["region"] = carbon_df["zone"].map(zone_to_region)
 renewable_df["region"] = renewable_df["zone"].map(zone_to_region)
 
-REGION_COLOR_SEQUENCE = ["#2563EB", "#0EA5A0", "#7C3AED", "#D97706", "#DC2626", "#0891B2"]
+REGION_COLOR_SEQUENCE = ["#0A0A0A", "#F5C518", "#B8860B", "#5C5C5C", "#D97706", "#2E2E2E"]
 
 tab_c, tab_r, tab_w = st.tabs(["Carbon Intensity", "Renewable Mix", "Water Stress"])
 
@@ -379,7 +401,7 @@ with tab_w:
     wdf = pd.DataFrame(water_rows).sort_values("Stress")
     fig3 = px.bar(
         wdf, x="Region", y="Stress", color="Stress",
-        color_continuous_scale=[COLOR_ACCENT, COLOR_WARN, COLOR_DANGER],
+        color_continuous_scale=[COLOR_PRIMARY_DARK, COLOR_PRIMARY, COLOR_DANGER],
         title="Current Water Stress by Region",
         range_color=[0, 1], height=350,
     )
@@ -423,9 +445,9 @@ if carbon_budget._ceiling > 0:
             "axis": {"range": [0, 100]},
             "bar": {"color": COLOR_PRIMARY},
             "steps": [
-                {"range": [0, 60], "color": "#E6F7F5"},
-                {"range": [60, 80], "color": "#FEF3C7"},
-                {"range": [80, 100], "color": "#FEE2E2"},
+                {"range": [0, 60], "color": "#FBF3D2"},
+                {"range": [60, 80], "color": "#FDE68A"},
+                {"range": [80, 100], "color": "#FCA5A5"},
             ],
             "threshold": {"line": {"color": COLOR_DANGER, "width": 4}, "value": 90},
         },
@@ -662,11 +684,11 @@ try:
         # Colour status — muted, professional palette
         def colour_status(val):
             colours = {
-                "scheduled": "background-color: #E6F7F5; color: #0F172A;",
-                "running": "background-color: #DBEAFE; color: #0F172A;",
-                "completed": "background-color: #EDE9FE; color: #0F172A;",
-                "deferred": "background-color: #FEF3C7; color: #0F172A;",
-                "failed": "background-color: #FEE2E2; color: #0F172A;",
+                "scheduled": "background-color: #FBF3D2; color: #0A0A0A;",
+                "running": "background-color: #F5C518; color: #0A0A0A;",
+                "completed": "background-color: #E5E5DE; color: #0A0A0A;",
+                "deferred": "background-color: #FDE68A; color: #0A0A0A;",
+                "failed": "background-color: #FCA5A5; color: #0A0A0A;",
             }
             return colours.get(val, "")
 
