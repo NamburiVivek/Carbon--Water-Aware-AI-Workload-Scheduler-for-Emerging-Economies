@@ -28,6 +28,18 @@ import requests
 
 API_BASE_URL = "https://carbon-water-aware-ai-workload-sche.vercel.app"
 
+# ── Professional colour palette ────────────────────────────────────────────
+COLOR_PRIMARY = "#2563EB"      # slate blue — primary accent
+COLOR_PRIMARY_DARK = "#1E3A5F"  # deep navy — headers, borders
+COLOR_ACCENT = "#0EA5A0"       # teal — positive / green signals
+COLOR_WARN = "#D97706"         # amber — caution
+COLOR_DANGER = "#DC2626"       # red — hard limits / negative
+COLOR_BG_CARD = "#F8FAFC"      # near-white card background
+COLOR_BG_CARD_DARK = "#0F172A"  # dark card background (for dark theme)
+COLOR_BORDER = "#E2E8F0"
+COLOR_TEXT_MUTED = "#64748B"
+
+
 def api_get(endpoint):
     response = requests.get(
         f"{API_BASE_URL}{endpoint}",
@@ -55,11 +67,6 @@ def api_delete(endpoint):
     response.raise_for_status()
     return response
 
-try:
-    api_status = api_get("/")
-    st.sidebar.success("✅ Connected to deployed API")
-except Exception as e:
-    st.sidebar.error(f"❌ API connection failed: {e}")
 
 from config.loader import get_settings
 from data.carbon import _mock_forecast
@@ -72,22 +79,120 @@ from workloads.queue import job_queue
 
 # ── Page config ───────────────────────────────────────────────────────────────
 st.set_page_config(
-    page_title="GreenScheduler",
+    page_title="GreenScheduler | Sustainability Operations Console",
     page_icon="🌿",
     layout="wide",
     initial_sidebar_state="expanded",
 )
 
-# ── Custom CSS ────────────────────────────────────────────────────────────────
-st.markdown("""
+# ── Global styling ────────────────────────────────────────────────────────────
+st.markdown(f"""
 <style>
-.metric-card {
-    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
-    border-radius: 12px; padding: 16px; margin: 4px;
-    border-left: 4px solid #00d4aa;
-}
-.impact-number { font-size: 2.5rem; font-weight: 700; color: #00d4aa; }
-.saved-label { font-size: 0.85rem; color: #aaa; }
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+
+html, body, [class*="css"] {{
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}}
+
+/* Header */
+.dashboard-header {{
+    padding: 18px 24px;
+    background: linear-gradient(135deg, {COLOR_PRIMARY_DARK} 0%, #14213D 100%);
+    border-radius: 10px;
+    margin-bottom: 18px;
+    border: 1px solid #1F2E4A;
+}}
+.dashboard-header h1 {{
+    margin: 0;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: #F1F5F9;
+    letter-spacing: -0.01em;
+}}
+.dashboard-header p {{
+    margin: 4px 0 0 0;
+    font-size: 0.9rem;
+    color: #94A3B8;
+}}
+
+/* Section headers */
+.section-label {{
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: {COLOR_TEXT_MUTED};
+    margin-bottom: 2px;
+}}
+
+/* Metric / region cards */
+.region-card {{
+    border: 1px solid {COLOR_BORDER};
+    border-radius: 10px;
+    padding: 14px 16px;
+    margin: 4px 0;
+    background: white;
+    box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    transition: box-shadow 0.15s ease;
+}}
+.region-card.leading {{
+    border-left: 3px solid {COLOR_ACCENT};
+    box-shadow: 0 2px 6px rgba(14, 165, 160, 0.12);
+}}
+.region-card .region-name {{
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #0F172A;
+}}
+.region-card .badge {{
+    display: inline-block;
+    font-size: 0.68rem;
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: {COLOR_ACCENT};
+    background: rgba(14, 165, 160, 0.1);
+    padding: 2px 8px;
+    border-radius: 20px;
+    margin-left: 6px;
+}}
+.region-card .metric-row {{
+    font-size: 0.85rem;
+    color: #334155;
+    margin-top: 6px;
+    line-height: 1.6;
+}}
+.region-card .metric-row b {{
+    font-family: 'IBM Plex Mono', monospace;
+    color: #0F172A;
+}}
+
+.metric-card {{
+    background: {COLOR_BG_CARD};
+    border-radius: 10px;
+    padding: 16px;
+    margin: 4px;
+    border-left: 3px solid {COLOR_ACCENT};
+}}
+.impact-number {{
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 2.2rem;
+    font-weight: 700;
+    color: {COLOR_PRIMARY_DARK};
+}}
+.saved-label {{
+    font-size: 0.8rem;
+    color: {COLOR_TEXT_MUTED};
+}}
+
+hr {{
+    border-color: {COLOR_BORDER} !important;
+}}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {{
+    border-right: 1px solid {COLOR_BORDER};
+}}
 </style>
 """, unsafe_allow_html=True)
 
@@ -114,12 +219,26 @@ settings = get_settings()
 engine = load_engine()
 water_service = WaterDataService()
 
-st.sidebar.title("🌿 GreenScheduler")
-st.sidebar.caption("Environmentally-aware AI infrastructure scheduler")
+st.sidebar.markdown(
+    """
+    <div style="padding-bottom: 4px;">
+        <div style="font-size:1.15rem; font-weight:700; color:#0F172A;">GreenScheduler</div>
+        <div style="font-size:0.78rem; color:#64748B;">Sustainability Operations Console</div>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 st.sidebar.markdown("---")
 
-st.sidebar.subheader("⚖️ Live Objective Weights")
-st.sidebar.caption("Drag to re-weight the scheduler in real time.")
+try:
+    api_status = api_get("/")
+    st.sidebar.success("API connection: online")
+except Exception as e:
+    st.sidebar.error(f"API connection failed: {e}")
+
+st.sidebar.markdown("---")
+st.sidebar.markdown('<div class="section-label">Objective Weights</div>', unsafe_allow_html=True)
+st.sidebar.caption("Adjust in real time to re-balance the scheduler.")
 
 w_carbon = st.sidebar.slider("Carbon intensity", 0.0, 1.0, settings.weights.carbon, 0.05)
 w_water = st.sidebar.slider("Water stress", 0.0, 1.0, settings.weights.water, 0.05)
@@ -129,14 +248,14 @@ w_community = st.sidebar.slider("Community priority", 0.0, 1.0, settings.weights
 
 total_w = w_carbon + w_water + w_renewable + w_deadline + w_community
 if abs(total_w - 1.0) > 0.05:
-    st.sidebar.warning(f"Weights sum to {total_w:.2f} — they should sum to 1.0")
+    st.sidebar.warning(f"Weights sum to {total_w:.2f} — target is 1.00")
 
 st.sidebar.markdown("---")
-st.sidebar.subheader("💰 Carbon Budget")
+st.sidebar.markdown('<div class="section-label">Carbon Budget</div>', unsafe_allow_html=True)
 budget_limit = st.sidebar.number_input(
     "Monthly ceiling (kgCO₂)", min_value=0.0, value=float(carbon_budget._ceiling / 1000), step=100.0
 )
-if st.sidebar.button("Apply Budget"):
+if st.sidebar.button("Apply Budget", use_container_width=True):
     carbon_budget._ceiling = budget_limit * 1000
     st.sidebar.success(f"Budget set to {budget_limit:.0f} kgCO₂/month")
 
@@ -151,12 +270,18 @@ settings.weights = Weights(
 ) if abs(total_w - 1.0) <= 0.05 else settings.weights
 
 # ── Main ──────────────────────────────────────────────────────────────────────
-st.title("🌿 GreenScheduler")
-st.caption("Jointly optimising carbon · water · renewables · deadlines · community")
-st.markdown("---")
+st.markdown(
+    """
+    <div class="dashboard-header">
+        <h1>GreenScheduler</h1>
+        <p>Jointly optimising carbon intensity · water stress · renewable availability · deadlines · community priority</p>
+    </div>
+    """,
+    unsafe_allow_html=True,
+)
 
 # ── Section 1: Environmental snapshot ─────────────────────────────────────────
-st.subheader("🌍 Live Environmental Snapshot")
+st.markdown('<div class="section-label">Live Environmental Snapshot</div>', unsafe_allow_html=True)
 region_names = list(settings.regions.keys())
 
 env_data = []
@@ -172,7 +297,7 @@ for rname in region_names:
         "Carbon (gCO₂/kWh)": round(carbon, 0),
         "Renewable %": round(renewable * 100, 1),
         "Water Stress": round(water.stress_index, 2),
-        "Drought ⚠️": "⚠️" if water.drought_alert else "✅",
+        "Drought Alert": "Yes" if water.drought_alert else "No",
         "Community": cfg.community_score,
         "Green Score": round((1 - carbon / 600) * 0.5 + renewable * 0.3 + (1 - water.stress_index) * 0.2, 3),
     })
@@ -184,15 +309,18 @@ cols = st.columns(len(region_names))
 for i, row in env_df.iterrows():
     idx = env_df.index.get_loc(i)
     with cols[idx]:
-        border = "#00d4aa" if idx == 0 else "#444"
-        label = "🏆 Greenest Now" if idx == 0 else ""
+        card_class = "region-card leading" if idx == 0 else "region-card"
+        badge = '<span class="badge">Top ranked</span>' if idx == 0 else ""
+        drought_note = f" · Drought alert" if row["Drought Alert"] == "Yes" else ""
         st.markdown(
-            f"""<div style="border:2px solid {border}; border-radius:10px; padding:12px; margin:4px;">
-            <b>{row['Region']}</b> {label}<br>
-            ⚡ <b>{row['Carbon (gCO₂/kWh)']:.0f}</b> gCO₂/kWh<br>
-            🌱 <b>{row['Renewable %']:.1f}%</b> renewable<br>
-            💧 Stress: <b>{row['Water Stress']:.2f}</b> {row['Drought ⚠️']}<br>
-            📊 Green score: <b>{row['Green Score']:.3f}</b>
+            f"""<div class="{card_class}">
+            <span class="region-name">{row['Region']}</span>{badge}
+            <div class="metric-row">
+            Carbon &nbsp;<b>{row['Carbon (gCO₂/kWh)']:.0f}</b> gCO₂/kWh<br>
+            Renewable &nbsp;<b>{row['Renewable %']:.1f}%</b><br>
+            Water stress &nbsp;<b>{row['Water Stress']:.2f}</b>{drought_note}<br>
+            Green score &nbsp;<b>{row['Green Score']:.3f}</b>
+            </div>
             </div>""",
             unsafe_allow_html=True,
         )
@@ -200,7 +328,7 @@ for i, row in env_df.iterrows():
 st.markdown("---")
 
 # ── Section 2: Cross-region comparison ────────────────────────────────────────
-st.subheader("📊 Cross-Region Comparison")
+st.markdown('<div class="section-label">Cross-Region Comparison</div>', unsafe_allow_html=True)
 grid_zones = tuple(cfg.grid_zone for cfg in settings.regions.values())
 carbon_df, renewable_df = fetch_all_forecasts(grid_zones)
 
@@ -208,7 +336,9 @@ zone_to_region = {cfg.grid_zone: rname for rname, cfg in settings.regions.items(
 carbon_df["region"] = carbon_df["zone"].map(zone_to_region)
 renewable_df["region"] = renewable_df["zone"].map(zone_to_region)
 
-tab_c, tab_r, tab_w = st.tabs(["⚡ Carbon Intensity", "🌱 Renewable Mix", "💧 Water Stress"])
+REGION_COLOR_SEQUENCE = ["#2563EB", "#0EA5A0", "#7C3AED", "#D97706", "#DC2626", "#0891B2"]
+
+tab_c, tab_r, tab_w = st.tabs(["Carbon Intensity", "Renewable Mix", "Water Stress"])
 
 with tab_c:
     fig = px.line(
@@ -216,10 +346,14 @@ with tab_c:
         title="48-hour Carbon Intensity Forecast — All Regions",
         labels={"carbon": "gCO₂/kWh", "time": "Time (UTC)", "region": "Region"},
         height=380,
+        color_discrete_sequence=REGION_COLOR_SEQUENCE,
     )
     fig.add_hline(y=settings.constraints.max_carbon_intensity, line_dash="dash",
-                  line_color="red", annotation_text="Hard cap")
-    fig.add_hline(y=250, line_dash="dot", line_color="orange", annotation_text="Preferred max")
+                  line_color=COLOR_DANGER, annotation_text="Hard cap")
+    fig.add_hline(y=250, line_dash="dot", line_color=COLOR_WARN, annotation_text="Preferred max")
+    fig.update_layout(plot_bgcolor="white", paper_bgcolor="white",
+                       font=dict(family="Inter, sans-serif", color="#334155"),
+                       legend_title_text="")
     st.plotly_chart(fig, use_container_width=True)
 
 with tab_r:
@@ -228,8 +362,12 @@ with tab_r:
         title="48-hour Renewable Fraction Forecast — All Regions",
         labels={"renewable_pct": "Renewable %", "time": "Time (UTC)", "region": "Region"},
         height=380,
+        color_discrete_sequence=REGION_COLOR_SEQUENCE,
     )
-    fig2.add_hline(y=60, line_dash="dot", line_color="green", annotation_text="60% preferred")
+    fig2.add_hline(y=60, line_dash="dot", line_color=COLOR_ACCENT, annotation_text="60% preferred")
+    fig2.update_layout(plot_bgcolor="white", paper_bgcolor="white",
+                        font=dict(family="Inter, sans-serif", color="#334155"),
+                        legend_title_text="")
     st.plotly_chart(fig2, use_container_width=True)
 
 with tab_w:
@@ -241,36 +379,38 @@ with tab_w:
     wdf = pd.DataFrame(water_rows).sort_values("Stress")
     fig3 = px.bar(
         wdf, x="Region", y="Stress", color="Stress",
-        color_continuous_scale=["#00d4aa", "yellow", "red"],
+        color_continuous_scale=[COLOR_ACCENT, COLOR_WARN, COLOR_DANGER],
         title="Current Water Stress by Region",
         range_color=[0, 1], height=350,
     )
     fig3.add_hline(y=settings.constraints.max_water_stress, line_dash="dash",
-                   line_color="red", annotation_text="Hard limit")
+                   line_color=COLOR_DANGER, annotation_text="Hard limit")
+    fig3.update_layout(plot_bgcolor="white", paper_bgcolor="white",
+                        font=dict(family="Inter, sans-serif", color="#334155"))
     st.plotly_chart(fig3, use_container_width=True)
 
 st.markdown("---")
 
 # ── Section 3: Cumulative Impact ───────────────────────────────────────────────
-st.subheader("🌱 Cumulative Environmental Impact")
+st.markdown('<div class="section-label">Cumulative Environmental Impact</div>', unsafe_allow_html=True)
 lifetime = carbon_budget.lifetime_summary()
 total_saved = lifetime["total_saved_gco2"]
 total_emitted = lifetime["total_emitted_gco2"]
 jobs_sched = lifetime["jobs_scheduled"]
 
 imp_col1, imp_col2, imp_col3, imp_col4, imp_col5 = st.columns(5)
-imp_col1.metric("♻️ CO₂ Saved", f"{total_saved/1000:.2f} kgCO₂",
+imp_col1.metric("CO₂ Saved", f"{total_saved/1000:.2f} kgCO₂",
                 delta=f"{lifetime['saving_rate_pct']:.1f}% saving rate")
-imp_col2.metric("⚡ CO₂ Emitted", f"{total_emitted/1000:.2f} kgCO₂")
-imp_col3.metric("✅ Jobs Scheduled", str(jobs_sched))
-imp_col4.metric("🌳 Trees Equivalent", f"{total_saved/21000:.1f}",
+imp_col2.metric("CO₂ Emitted", f"{total_emitted/1000:.2f} kgCO₂")
+imp_col3.metric("Jobs Scheduled", str(jobs_sched))
+imp_col4.metric("Trees Equivalent", f"{total_saved/21000:.1f}",
                 delta="trees/year offset")
-imp_col5.metric("🚗 Car km Avoided", f"{total_saved/120:.0f} km")
+imp_col5.metric("Car km Avoided", f"{total_saved/120:.0f} km")
 
 # ── Section 4: Carbon Budget Gauge ────────────────────────────────────────────
 if carbon_budget._ceiling > 0:
     st.markdown("---")
-    st.subheader("💰 Carbon Budget")
+    st.markdown('<div class="section-label">Carbon Budget</div>', unsafe_allow_html=True)
     bsummary = carbon_budget.current_period_summary()
     util = bsummary["utilisation_pct"]
 
@@ -278,20 +418,20 @@ if carbon_budget._ceiling > 0:
         mode="gauge+number+delta",
         value=util,
         title={"text": f"Budget Utilisation — {bsummary['period']}"},
-        delta={"reference": 80, "increasing": {"color": "red"}},
+        delta={"reference": 80, "increasing": {"color": COLOR_DANGER}},
         gauge={
             "axis": {"range": [0, 100]},
-            "bar": {"color": "#00d4aa"},
+            "bar": {"color": COLOR_PRIMARY},
             "steps": [
-                {"range": [0, 60], "color": "#1a3a2a"},
-                {"range": [60, 80], "color": "#3a3a1a"},
-                {"range": [80, 100], "color": "#3a1a1a"},
+                {"range": [0, 60], "color": "#E6F7F5"},
+                {"range": [60, 80], "color": "#FEF3C7"},
+                {"range": [80, 100], "color": "#FEE2E2"},
             ],
-            "threshold": {"line": {"color": "red", "width": 4}, "value": 90},
+            "threshold": {"line": {"color": COLOR_DANGER, "width": 4}, "value": 90},
         },
         number={"suffix": "%"},
     ))
-    gauge.update_layout(height=280)
+    gauge.update_layout(height=280, font=dict(family="Inter, sans-serif"))
     bcol1, bcol2 = st.columns([1, 2])
     with bcol1:
         st.plotly_chart(gauge, use_container_width=True)
@@ -299,13 +439,13 @@ if carbon_budget._ceiling > 0:
         st.metric("Ceiling", f"{bsummary['ceiling_gco2']/1000:.1f} kgCO₂")
         st.metric("Spent", f"{bsummary['spent_gco2']/1000:.2f} kgCO₂")
         st.metric("Remaining", f"{bsummary['remaining_gco2']/1000:.2f} kgCO₂",
-                  delta="Available" if not bsummary["is_exhausted"] else "⛔ Exhausted",
+                  delta="Available" if not bsummary["is_exhausted"] else "Exhausted",
                   delta_color="normal" if not bsummary["is_exhausted"] else "inverse")
 
 st.markdown("---")
 
 # ── Section 5: Schedule Simulator ─────────────────────────────────────────────
-st.subheader("🔮 Interactive Schedule Simulator")
+st.markdown('<div class="section-label">Interactive Schedule Simulator</div>', unsafe_allow_html=True)
 st.caption("Configure a job and compare GreenScheduler's choice vs naive scheduling.")
 
 sim_c1, sim_c2, sim_c3, sim_c4 = st.columns(4)
@@ -327,7 +467,7 @@ st.caption(
     f"Total power draw: **{num_gpus * gpu_tdp / 1000:.1f} kW**"
 )
 
-if st.button("▶ Run GreenScheduler", type="primary", use_container_width=True):
+if st.button("Run GreenScheduler", type="primary", use_container_width=True):
     from config.loader import Settings as S, Weights as W, Constraints, Scheduling, CacheConfig, ServerConfig, LoggingConfig
     # Build custom settings from sidebar weights
     custom_settings = S(
@@ -358,10 +498,10 @@ if st.button("▶ Run GreenScheduler", type="primary", use_container_width=True)
     if result.is_feasible:
         b = result.best
 
-        st.success(f"**Best window found:** {b.region} @ {b.window_start.strftime('%Y-%m-%d %H:%M UTC')}")
+        st.success(f"Best window found: **{b.region}** @ {b.window_start.strftime('%Y-%m-%d %H:%M UTC')}")
 
         # What-if comparison
-        st.markdown("### 📊 GreenScheduler vs Naive Scheduling")
+        st.markdown("##### GreenScheduler vs Naive Scheduling")
         cmp_c1, cmp_c2, cmp_c3 = st.columns(3)
 
         if result.naive_baseline:
@@ -387,24 +527,26 @@ if st.button("▶ Run GreenScheduler", type="primary", use_container_width=True)
 
             # Comparison bar chart
             cmp_df = pd.DataFrame([
-                {"Scheduler": "🌿 GreenScheduler", "Carbon (gCO₂/kWh)": b.carbon_intensity,
+                {"Scheduler": "GreenScheduler", "Carbon (gCO₂/kWh)": b.carbon_intensity,
                  "Renewable %": b.renewable_fraction * 100, "Water Stress": b.water_stress},
-                {"Scheduler": "⚡ Naive (immediate)", "Carbon (gCO₂/kWh)": nb.carbon_intensity,
+                {"Scheduler": "Naive (immediate)", "Carbon (gCO₂/kWh)": nb.carbon_intensity,
                  "Renewable %": nb.renewable_fraction * 100, "Water Stress": nb.water_stress},
             ])
             fig_cmp = px.bar(
                 cmp_df, x="Scheduler", y="Carbon (gCO₂/kWh)",
                 color="Scheduler", color_discrete_map={
-                    "🌿 GreenScheduler": "#00d4aa",
-                    "⚡ Naive (immediate)": "#e74c3c",
+                    "GreenScheduler": COLOR_ACCENT,
+                    "Naive (immediate)": COLOR_DANGER,
                 },
                 title="Carbon Intensity: GreenScheduler vs Naive",
                 height=300,
             )
+            fig_cmp.update_layout(plot_bgcolor="white", paper_bgcolor="white",
+                                   font=dict(family="Inter, sans-serif", color="#334155"))
             st.plotly_chart(fig_cmp, use_container_width=True)
 
         # Score breakdown
-        with st.expander("📋 Score breakdown"):
+        with st.expander("Score breakdown"):
             bd_df = pd.DataFrame([
                 {"Component": "Carbon", "Contribution": round(b.carbon_contribution, 4)},
                 {"Component": "Water", "Contribution": round(b.water_contribution, 4)},
@@ -413,12 +555,14 @@ if st.button("▶ Run GreenScheduler", type="primary", use_container_width=True)
                 {"Component": "Community", "Contribution": round(b.community_contribution, 4)},
             ])
             fig_bd = px.bar(bd_df, x="Component", y="Contribution", color="Contribution",
-                            color_continuous_scale=["#00d4aa", "white", "#e74c3c"],
+                            color_continuous_scale=[COLOR_ACCENT, "white", COLOR_DANGER],
                             title="Score Component Breakdown (negative = good)", height=280)
+            fig_bd.update_layout(plot_bgcolor="white", paper_bgcolor="white",
+                                  font=dict(family="Inter, sans-serif", color="#334155"))
             st.plotly_chart(fig_bd, use_container_width=True)
 
         # Top candidates table
-        st.markdown("### 🏆 Top Candidate Windows")
+        st.markdown("##### Top Candidate Windows")
         top = [c for c in result.all_candidates if c.feasible][:15]
         if top:
             tdf = pd.DataFrame([{
@@ -434,7 +578,7 @@ if st.button("▶ Run GreenScheduler", type="primary", use_container_width=True)
             st.dataframe(tdf, use_container_width=True, hide_index=True)
 
         # Timeline view — scatter plot of all feasible windows
-        st.markdown("### 🗓️ Candidate Timeline")
+        st.markdown("##### Candidate Timeline")
         timeline_data = [
             {
                 "Region": c.region,
@@ -449,16 +593,19 @@ if st.button("▶ Run GreenScheduler", type="primary", use_container_width=True)
             tl_df = pd.DataFrame(timeline_data)
             best_key = (b.region, b.window_start)
             tl_df["Best"] = tl_df.apply(
-                lambda r: "★ Best" if (r["Region"], r["Start"]) == best_key else "Other",
+                lambda r: "Best" if (r["Region"], r["Start"]) == best_key else "Other",
                 axis=1,
             )
             fig_tl = px.scatter(
                 tl_df, x="Start", y="Carbon", color="Region", symbol="Best",
-                size=[8 if x == "★ Best" else 4 for x in tl_df["Best"]],
+                size=[8 if x == "Best" else 4 for x in tl_df["Best"]],
                 title="Feasible Windows — Carbon Intensity Over Time",
                 labels={"Carbon": "Carbon (gCO₂/kWh)", "Start": "Window Start (UTC)"},
                 height=380,
+                color_discrete_sequence=REGION_COLOR_SEQUENCE,
             )
+            fig_tl.update_layout(plot_bgcolor="white", paper_bgcolor="white",
+                                  font=dict(family="Inter, sans-serif", color="#334155"))
             st.plotly_chart(fig_tl, use_container_width=True)
 
     else:
@@ -466,7 +613,7 @@ if st.button("▶ Run GreenScheduler", type="primary", use_container_width=True)
 
 st.markdown("---")
 # ── Section 6: Live Job Queue ──────────────────────────────────────────────────
-st.subheader("📋 Live Job Queue")
+st.markdown('<div class="section-label">Live Job Queue</div>', unsafe_allow_html=True)
 
 try:
     # Get jobs from the deployed API
@@ -512,14 +659,14 @@ try:
 
         jdf = pd.DataFrame(job_rows)
 
-        # Colour status
+        # Colour status — muted, professional palette
         def colour_status(val):
             colours = {
-                "scheduled": "background-color: #1a3a2a",
-                "running": "background-color: #1a2a3a",
-                "completed": "background-color: #2a1a3a",
-                "deferred": "background-color: #3a2a1a",
-                "failed": "background-color: #3a1a1a",
+                "scheduled": "background-color: #E6F7F5; color: #0F172A;",
+                "running": "background-color: #DBEAFE; color: #0F172A;",
+                "completed": "background-color: #EDE9FE; color: #0F172A;",
+                "deferred": "background-color: #FEF3C7; color: #0F172A;",
+                "failed": "background-color: #FEE2E2; color: #0F172A;",
             }
             return colours.get(val, "")
 
@@ -544,7 +691,7 @@ try:
             )
 
             # Start job
-            if lc_col2.button("▶ Start Job"):
+            if lc_col2.button("Start Job", use_container_width=True):
                 try:
                     result = api_post(
                         f"/api/v1/jobs/{selected_jid}/start"
@@ -557,7 +704,7 @@ try:
                     st.error(f"Could not start job: {e}")
 
             # Complete job
-            if lc_col3.button("✅ Complete Job"):
+            if lc_col3.button("Complete Job", use_container_width=True):
                 try:
                     result = api_post(
                         f"/api/v1/jobs/{selected_jid}/complete"
@@ -570,7 +717,7 @@ try:
                     st.error(f"Could not complete job: {e}")
 
             # Cancel job
-            if lc_col4.button("❌ Cancel Job"):
+            if lc_col4.button("Cancel Job", use_container_width=True):
                 try:
                     api_delete(
                         f"/api/v1/jobs/{selected_jid}"
