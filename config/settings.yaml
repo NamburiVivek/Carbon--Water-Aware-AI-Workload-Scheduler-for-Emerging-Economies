@@ -1,0 +1,54 @@
+# GreenScheduler — Demo Configuration (mock data, no API keys required)
+
+api_keys:
+  electricity_maps: ""   # empty = use mock data
+  watttime: ""           # empty = use mock data
+  wri_aqueduct: ""       # empty = use seasonal model
+
+weights:
+  carbon: 0.35
+  water: 0.20
+  renewable: 0.20
+  deadline: 0.15
+  community: 0.10
+
+constraints:
+  max_carbon_intensity: 400
+  max_water_stress: 0.8
+  min_renewable_fraction: 0.0
+
+scheduling:
+  lookahead_hours: 48
+  window_resolution_minutes: 30
+  default_deadline_hours: 24
+
+regions:
+  us-east-1:
+    grid_zone: "US-MIDA-PJM"
+    water_basin: "Ohio River"
+    community_score: 0.6
+  us-west-2:
+    grid_zone: "US-NW-PACW"
+    water_basin: "Columbia River"
+    community_score: 0.4
+  eu-west-1:
+    grid_zone: "IE"
+    water_basin: "Shannon"
+    community_score: 0.5
+  ap-southeast-1:
+    grid_zone: "SG"
+    water_basin: "Johor River"
+    community_score: 0.7
+
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+
+cache:
+  backend: "memory"
+  ttl_seconds: 900
+
+logging:
+  level: "INFO"
+  format: "text"

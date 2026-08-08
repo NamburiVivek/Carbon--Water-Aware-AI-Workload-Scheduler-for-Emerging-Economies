@@ -1,0 +1,66 @@
+# GreenScheduler Configuration
+# Copy this file to settings.yaml and fill in your values.
+
+# ── API Keys ────────────────────────────────────────────────────────────────
+api_keys:
+  electricity_maps: "YOUR_ELECTRICITYMAPS_API_KEY"   # https://api-portal.electricitymaps.com
+  watttime: "YOUR_WATTTIME_API_KEY"                  # https://watttime.org
+  wri_aqueduct: ""                                   # optional; uses bundled data if empty
+
+# ── Scheduler Weights ────────────────────────────────────────────────────────
+# All weights must sum to 1.0.  Tune to reflect your organisation's priorities.
+weights:
+  carbon: 0.35          # minimize carbon intensity
+  water: 0.20           # minimize water stress
+  renewable: 0.20       # maximize renewable fraction (negative contribution)
+  deadline: 0.15        # penalise proximity to deadline
+  community: 0.10       # favour regions with lower community burden
+
+# ── Hard Constraints ─────────────────────────────────────────────────────────
+constraints:
+  max_carbon_intensity: 400   # gCO₂eq/kWh — hard ceiling; job will not run above this
+  max_water_stress: 0.8       # 0–1 index; hard ceiling during drought alerts
+  min_renewable_fraction: 0.0 # 0–1; set >0 to require a minimum green mix
+
+# ── Scheduling Horizon ───────────────────────────────────────────────────────
+scheduling:
+  lookahead_hours: 48         # how far ahead to evaluate windows
+  window_resolution_minutes: 30  # granularity of candidate windows
+  default_deadline_hours: 24  # used when a job has no explicit deadline
+
+# ── Regions ──────────────────────────────────────────────────────────────────
+# Each region maps to a grid-zone identifier used by Electricity Maps.
+regions:
+  us-east-1:
+    grid_zone: "US-MIDA-PJM"
+    water_basin: "Ohio River"
+    community_score: 0.6      # 0 = highest priority community; 1 = lowest
+  us-west-2:
+    grid_zone: "US-NW-PACW"
+    water_basin: "Columbia River"
+    community_score: 0.4
+  eu-west-1:
+    grid_zone: "IE"
+    water_basin: "Shannon"
+    community_score: 0.5
+  ap-southeast-1:
+    grid_zone: "SG"
+    water_basin: "Johor River"
+    community_score: 0.7
+
+# ── API Server ───────────────────────────────────────────────────────────────
+server:
+  host: "0.0.0.0"
+  port: 8000
+  reload: false
+
+# ── Cache ────────────────────────────────────────────────────────────────────
+cache:
+  backend: "memory"           # "memory" | "redis"
+  redis_url: "redis://localhost:6379/0"
+  ttl_seconds: 900            # 15 minutes
+
+# ── Logging ──────────────────────────────────────────────────────────────────
+logging:
+  level: "INFO"               # DEBUG | INFO | WARNING | ERROR
+  format: "json"              # "json" | "text"
