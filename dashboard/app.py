@@ -28,16 +28,19 @@ import requests
 
 API_BASE_URL = "https://carbon-water-aware-ai-workload-sche.vercel.app"
 
-# ── Black & yellow colour palette ──────────────────────────────────────────
-COLOR_PRIMARY = "#F5C518"      # signal yellow — primary accent
-COLOR_PRIMARY_DARK = "#0A0A0A"  # near-black — headers, borders
-COLOR_ACCENT = "#F5C518"       # yellow — positive / green signals
-COLOR_WARN = "#D97706"         # amber — caution
-COLOR_DANGER = "#E53935"       # red — hard limits / negative
-COLOR_BG_CARD = "#FAFAF7"      # warm off-white card background
-COLOR_BG_CARD_DARK = "#111111"  # dark card background (for dark theme)
-COLOR_BORDER = "#1A1A1A"
-COLOR_TEXT_MUTED = "#5C5C5C"
+# ── Yellow → orange colour palette ─────────────────────────────────────────
+COLOR_GRAD_START = "#FBBF24"    # amber / yellow — gradient start
+COLOR_GRAD_END = "#F97316"      # orange — gradient end
+COLOR_PRIMARY = "#F97316"       # orange — primary accent
+COLOR_PRIMARY_DARK = "#7C2D12"  # deep burnt-orange/brown — high-contrast text
+COLOR_ACCENT = "#F97316"        # orange — positive / highlight signals
+COLOR_WARN = "#D97706"          # amber — caution
+COLOR_DANGER = "#DC2626"        # red — hard limits / negative
+COLOR_BG_PAGE = "#FFFBF5"       # warm off-white page background
+COLOR_BG_CARD = "#FFFFFF"       # card background
+COLOR_BORDER = "#F1DFC4"        # warm neutral border
+COLOR_TEXT = "#292118"          # primary body text (warm charcoal)
+COLOR_TEXT_MUTED = "#8A7860"    # muted warm grey-brown
 
 
 def api_get(endpoint):
@@ -88,32 +91,58 @@ st.set_page_config(
 # ── Global styling ────────────────────────────────────────────────────────────
 st.markdown(f"""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500&display=swap');
 
 html, body, [class*="css"] {{
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
 }}
 
-/* Header */
+/* ── Force one consistent light background app-wide (prevents it clashing
+      with the browser/OS dark theme) and set a sane default text colour ── */
+.stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
+    background: {COLOR_BG_PAGE} !important;
+    color: {COLOR_TEXT} !important;
+}}
+.block-container {{
+    padding-top: 1.6rem;
+    max-width: 1300px;
+}}
+[data-testid="stAppViewContainer"] * {{
+    color: {COLOR_TEXT};
+}}
+p, span, label, div {{
+    color: inherit;
+}}
+
+/* Sidebar */
+section[data-testid="stSidebar"] {{
+    background: #FFFFFF !important;
+    border-right: 1px solid {COLOR_BORDER};
+}}
+section[data-testid="stSidebar"] * {{
+    color: {COLOR_TEXT} !important;
+}}
+
+/* Header banner */
 .dashboard-header {{
-    padding: 20px 24px;
-    background: {COLOR_PRIMARY_DARK};
-    border-radius: 10px;
-    margin-bottom: 18px;
-    border: 1px solid {COLOR_PRIMARY_DARK};
-    border-left: 5px solid {COLOR_PRIMARY};
+    padding: 22px 26px;
+    background: linear-gradient(120deg, {COLOR_GRAD_START} 0%, {COLOR_GRAD_END} 100%);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.25);
 }}
 .dashboard-header h1 {{
     margin: 0;
-    font-size: 1.6rem;
-    font-weight: 700;
-    color: {COLOR_PRIMARY};
+    font-size: 1.7rem;
+    font-weight: 800;
+    color: #FFFFFF;
     letter-spacing: -0.01em;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.08);
 }}
 .dashboard-header p {{
-    margin: 4px 0 0 0;
-    font-size: 0.9rem;
-    color: #CFCFCF;
+    margin: 6px 0 0 0;
+    font-size: 0.92rem;
+    color: rgba(255,255,255,0.92);
 }}
 
 /* Section headers */
@@ -125,24 +154,24 @@ html, body, [class*="css"] {{
     color: {COLOR_PRIMARY_DARK};
     margin-bottom: 6px;
     padding-bottom: 4px;
-    border-bottom: 2px solid {COLOR_PRIMARY};
+    border-bottom: 3px solid {COLOR_PRIMARY};
     display: inline-block;
 }}
 
 /* Metric / region cards */
 .region-card {{
-    border: 1px solid #E5E5DE;
-    border-radius: 10px;
+    border: 1px solid {COLOR_BORDER};
+    border-radius: 12px;
     padding: 14px 16px;
     margin: 4px 0;
-    background: white;
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    background: {COLOR_BG_CARD};
+    box-shadow: 0 1px 3px rgba(124, 45, 18, 0.05);
     transition: box-shadow 0.15s ease;
 }}
 .region-card.leading {{
-    border: 1px solid {COLOR_PRIMARY_DARK};
-    border-left: 4px solid {COLOR_PRIMARY};
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+    border: 1px solid {COLOR_GRAD_END};
+    border-left: 4px solid {COLOR_GRAD_END};
+    box-shadow: 0 4px 14px rgba(249, 115, 22, 0.16);
 }}
 .region-card .region-name {{
     font-weight: 700;
@@ -151,21 +180,21 @@ html, body, [class*="css"] {{
 }}
 .region-card .badge {{
     display: inline-block;
-    font-size: 0.66rem;
+    font-size: 0.65rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
-    color: {COLOR_PRIMARY_DARK};
-    background: {COLOR_PRIMARY};
+    color: #FFFFFF;
+    background: linear-gradient(120deg, {COLOR_GRAD_START}, {COLOR_GRAD_END});
     padding: 2px 9px;
-    border-radius: 3px;
+    border-radius: 20px;
     margin-left: 6px;
 }}
 .region-card .metric-row {{
     font-size: 0.85rem;
-    color: #333333;
+    color: {COLOR_TEXT};
     margin-top: 6px;
-    line-height: 1.6;
+    line-height: 1.65;
 }}
 .region-card .metric-row b {{
     font-family: 'IBM Plex Mono', monospace;
@@ -178,9 +207,9 @@ html, body, [class*="css"] {{
     padding: 16px;
     margin: 4px;
     border-left: 4px solid {COLOR_PRIMARY};
-    border-top: 1px solid #E5E5DE;
-    border-right: 1px solid #E5E5DE;
-    border-bottom: 1px solid #E5E5DE;
+    border-top: 1px solid {COLOR_BORDER};
+    border-right: 1px solid {COLOR_BORDER};
+    border-bottom: 1px solid {COLOR_BORDER};
 }}
 .impact-number {{
     font-family: 'IBM Plex Mono', monospace;
@@ -194,26 +223,86 @@ html, body, [class*="css"] {{
 }}
 
 hr {{
-    border-color: #E5E5DE !important;
+    border-color: {COLOR_BORDER} !important;
 }}
 
 /* Buttons */
 div.stButton > button[kind="primary"] {{
-    background-color: {COLOR_PRIMARY};
-    color: {COLOR_PRIMARY_DARK};
-    border: 1px solid {COLOR_PRIMARY_DARK};
+    background: linear-gradient(120deg, {COLOR_GRAD_START}, {COLOR_GRAD_END});
+    color: #FFFFFF !important;
+    border: none;
     font-weight: 700;
+    box-shadow: 0 2px 8px rgba(249, 115, 22, 0.3);
 }}
 div.stButton > button[kind="primary"]:hover {{
-    background-color: {COLOR_PRIMARY_DARK};
-    color: {COLOR_PRIMARY};
-    border: 1px solid {COLOR_PRIMARY_DARK};
+    filter: brightness(1.06);
+    box-shadow: 0 4px 12px rgba(249, 115, 22, 0.4);
+}}
+div.stButton > button[kind="secondary"] {{
+    border: 1px solid {COLOR_BORDER};
+    color: {COLOR_PRIMARY_DARK} !important;
+    background: #FFFFFF;
+}}
+div.stButton > button[kind="secondary"]:hover {{
+    border-color: {COLOR_PRIMARY};
+    color: {COLOR_PRIMARY} !important;
 }}
 
-/* Sidebar */
-section[data-testid="stSidebar"] {{
-    border-right: 2px solid {COLOR_PRIMARY_DARK};
-    background: #FDFDFB;
+/* Sliders (BaseWeb) */
+div[data-baseweb="slider"] div[role="slider"] {{
+    background-color: {COLOR_GRAD_END} !important;
+    border-color: {COLOR_GRAD_END} !important;
+    box-shadow: 0 0 0 4px rgba(249, 115, 22, 0.15) !important;
+}}
+div[data-baseweb="slider"] > div > div:nth-child(2) {{
+    background: linear-gradient(90deg, {COLOR_GRAD_START}, {COLOR_GRAD_END}) !important;
+}}
+[data-testid="stTickBarMin"], [data-testid="stTickBarMax"] {{
+    color: {COLOR_TEXT_MUTED} !important;
+}}
+[data-testid="stThumbValue"] {{
+    color: {COLOR_PRIMARY_DARK} !important;
+    font-weight: 600;
+}}
+
+/* Tabs */
+button[data-baseweb="tab"] {{
+    color: {COLOR_TEXT_MUTED};
+    font-weight: 600;
+}}
+button[data-baseweb="tab"][aria-selected="true"] {{
+    color: {COLOR_GRAD_END} !important;
+}}
+div[data-baseweb="tab-highlight"] {{
+    background-color: {COLOR_GRAD_END} !important;
+}}
+div[data-baseweb="tab-border"] {{
+    background-color: {COLOR_BORDER} !important;
+}}
+
+/* Metrics */
+[data-testid="stMetricLabel"] {{
+    color: {COLOR_TEXT_MUTED} !important;
+}}
+[data-testid="stMetricValue"] {{
+    color: {COLOR_PRIMARY_DARK} !important;
+    font-family: 'IBM Plex Mono', monospace;
+}}
+
+/* Expander */
+details {{
+    border: 1px solid {COLOR_BORDER} !important;
+    border-radius: 10px !important;
+    background: {COLOR_BG_CARD};
+}}
+summary {{
+    font-weight: 600;
+    color: {COLOR_PRIMARY_DARK} !important;
+}}
+
+/* Select boxes / number inputs */
+div[data-baseweb="select"] > div, .stNumberInput input {{
+    border-radius: 8px !important;
 }}
 </style>
 """, unsafe_allow_html=True)
@@ -243,9 +332,9 @@ water_service = WaterDataService()
 
 st.sidebar.markdown(
     f"""
-    <div style="padding: 10px 12px; background:{COLOR_PRIMARY_DARK}; border-radius:8px; border-left: 4px solid {COLOR_PRIMARY}; margin-bottom: 4px;">
-        <div style="font-size:1.1rem; font-weight:700; color:{COLOR_PRIMARY};">GreenScheduler</div>
-        <div style="font-size:0.76rem; color:#CFCFCF;">Sustainability Operations Console</div>
+    <div style="padding: 12px 14px; background: linear-gradient(120deg, {COLOR_GRAD_START}, {COLOR_GRAD_END}); border-radius:10px; margin-bottom: 4px; box-shadow: 0 2px 8px rgba(249,115,22,0.25);">
+        <div style="font-size:1.1rem; font-weight:800; color:#FFFFFF;">GreenScheduler</div>
+        <div style="font-size:0.76rem; color:rgba(255,255,255,0.9);">Sustainability Operations Console</div>
     </div>
     """,
     unsafe_allow_html=True,
@@ -358,7 +447,7 @@ zone_to_region = {cfg.grid_zone: rname for rname, cfg in settings.regions.items(
 carbon_df["region"] = carbon_df["zone"].map(zone_to_region)
 renewable_df["region"] = renewable_df["zone"].map(zone_to_region)
 
-REGION_COLOR_SEQUENCE = ["#0A0A0A", "#F5C518", "#B8860B", "#5C5C5C", "#D97706", "#2E2E2E"]
+REGION_COLOR_SEQUENCE = ["#F97316", "#FBBF24", "#DC2626", "#7C2D12", "#FB923C", "#B45309"]
 
 tab_c, tab_r, tab_w = st.tabs(["Carbon Intensity", "Renewable Mix", "Water Stress"])
 
@@ -445,8 +534,8 @@ if carbon_budget._ceiling > 0:
             "axis": {"range": [0, 100]},
             "bar": {"color": COLOR_PRIMARY},
             "steps": [
-                {"range": [0, 60], "color": "#FBF3D2"},
-                {"range": [60, 80], "color": "#FDE68A"},
+                {"range": [0, 60], "color": "#FEF3C7"},
+                {"range": [60, 80], "color": "#FDBA74"},
                 {"range": [80, 100], "color": "#FCA5A5"},
             ],
             "threshold": {"line": {"color": COLOR_DANGER, "width": 4}, "value": 90},
@@ -684,11 +773,11 @@ try:
         # Colour status — muted, professional palette
         def colour_status(val):
             colours = {
-                "scheduled": "background-color: #FBF3D2; color: #0A0A0A;",
-                "running": "background-color: #F5C518; color: #0A0A0A;",
-                "completed": "background-color: #E5E5DE; color: #0A0A0A;",
-                "deferred": "background-color: #FDE68A; color: #0A0A0A;",
-                "failed": "background-color: #FCA5A5; color: #0A0A0A;",
+                "scheduled": "background-color: #FEF3C7; color: #7C2D12;",
+                "running": "background-color: #FED7AA; color: #7C2D12;",
+                "completed": "background-color: #FFEDD5; color: #7C2D12;",
+                "deferred": "background-color: #FDE68A; color: #7C2D12;",
+                "failed": "background-color: #FCA5A5; color: #7C2D12;",
             }
             return colours.get(val, "")
 
