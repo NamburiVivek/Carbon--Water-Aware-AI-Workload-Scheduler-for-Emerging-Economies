@@ -24,6 +24,42 @@ import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 import streamlit as st
+import requests
+
+API_BASE_URL = "https://carbon-water-aware-ai-workload-sche.vercel.app"
+
+def api_get(endpoint):
+    response = requests.get(
+        f"{API_BASE_URL}{endpoint}",
+        timeout=30
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def api_post(endpoint, data=None):
+    response = requests.post(
+        f"{API_BASE_URL}{endpoint}",
+        json=data,
+        timeout=30
+    )
+    response.raise_for_status()
+    return response.json()
+
+
+def api_delete(endpoint):
+    response = requests.delete(
+        f"{API_BASE_URL}{endpoint}",
+        timeout=30
+    )
+    response.raise_for_status()
+    return response
+
+try:
+    api_status = api_get("/")
+    st.sidebar.success("✅ Connected to deployed API")
+except Exception as e:
+    st.sidebar.error(f"❌ API connection failed: {e}")
 
 from config.loader import get_settings
 from data.carbon import _mock_forecast
@@ -429,78 +465,125 @@ if st.button("▶ Run GreenScheduler", type="primary", use_container_width=True)
         st.error(result.explanation())
 
 st.markdown("---")
-
 # ── Section 6: Live Job Queue ──────────────────────────────────────────────────
 st.subheader("📋 Live Job Queue")
 
-all_jobs = job_queue.list_all()
-if not all_jobs:
-    st.info("No jobs in queue. Submit a job via the API or the simulator above.")
-else:
-    job_rows = []
-    for j in all_jobs:
-        job_rows.append({
-            "Job ID": j.request.job_id[:8] + "…",
-            "Name": j.request.name or "—",
-            "Status": j.status.value,
-            "Priority": j.request.priority.value,
-            "GPU-hrs": j.request.gpu_hours,
-            "Region": j.assigned_region or "—",
-            "CO₂ Saved (g)": j.carbon_saved_gco2 or 0,
-            "CO₂ Emitted (g)": j.carbon_emitted_gco2 or 0,
-            "Renewable %": f"{j.renewable_fraction:.1%}" if j.renewable_fraction else "—",
-            "Scheduled Start": j.scheduled_start.strftime("%m-%d %H:%M") if j.scheduled_start else "—",
-        })
-    jdf = pd.DataFrame(job_rows)
+try:
+    # Get jobs from the deployed API
+    all_jobs = api_get("/api/v1/jobs")
 
-    # Colour status
-    def colour_status(val):
-        colours = {
-            "scheduled": "background-color: #1a3a2a",
-            "running": "background-color: #1a2a3a",
-            "completed": "background-color: #2a1a3a",
-            "deferred": "background-color: #3a2a1a",
-            "failed": "background-color: #3a1a1a",
-        }
-        return colours.get(val, "")
+    if not all_jobs:
+        st.info("No jobs in queue. Submit a job via the API or the simulator above.")
 
-    st.dataframe(
-        jdf.style.applymap(colour_status, subset=["Status"]),
-        use_container_width=True,
-        hide_index=True,
-    )
+    else:
+        job_rows = []
 
-    # Quick lifecycle buttons
-    st.caption("Transition a job through its lifecycle:")
-    lc_col1, lc_col2, lc_col3 = st.columns(3)
-    job_ids = [j.request.job_id for j in all_jobs]
-    selected_jid = lc_col1.selectbox("Select job", job_ids,
-                                      format_func=lambda x: x[:16])
-    if lc_col2.button("▶ Mark Running"):
-        j = job_queue.get(selected_jid)
-        if j:
-            try:
-                j.mark_running()
-                job_queue.update(j)
-                st.success(f"Job {selected_jid[:8]} is now RUNNING")
-                st.rerun()
-            except Exception as e:
-                st.error(str(e))
-    if lc_col3.button("✅ Mark Completed"):
-        j = job_queue.get(selected_jid)
-        if j:
-            try:
-                j.mark_completed()
-                job_queue.update(j)
-                carbon_budget.commit(
-                    selected_jid,
-                    actual_gco2=j.carbon_emitted_gco2 or 0,
-                    saved_gco2=j.carbon_saved_gco2 or 0,
-                )
-                st.success(f"Job {selected_jid[:8]} COMPLETED — carbon committed to budget")
-                st.rerun()
-            except Exception as e:
-                st.error(str(e))
+        for j in all_jobs:
+            scheduled_start = j.get("scheduled_start")
+
+            if scheduled_start:
+                try:
+                    scheduled_start_display = datetime.fromisoformat(
+                        scheduled_start.replace("Z", "+00:00")
+                    ).strftime("%m-%d %H:%M")
+                except Exception:
+                    scheduled_start_display = scheduled_start
+            else:
+                scheduled_start_display = "—"
+
+            renewable = j.get("renewable_fraction")
+
+            job_rows.append({
+                "Job ID": j.get("job_id", "—"),
+                "Name": j.get("name") or "—",
+                "Status": j.get("status", "—"),
+                "Priority": j.get("priority", "—"),
+                "GPU-hrs": j.get("gpu_hours", 0),
+                "Region": j.get("assigned_region") or "—",
+                "CO₂ Saved (g)": j.get("carbon_saved_gco2") or 0,
+                "CO₂ Emitted (g)": j.get("carbon_emitted_gco2") or 0,
+                "Renewable %": (
+                    f"{renewable * 100:.1f}%"
+                    if renewable is not None
+                    else "—"
+                ),
+                "Scheduled Start": scheduled_start_display,
+            })
+
+        jdf = pd.DataFrame(job_rows)
+
+        # Colour status
+        def colour_status(val):
+            colours = {
+                "scheduled": "background-color: #1a3a2a",
+                "running": "background-color: #1a2a3a",
+                "completed": "background-color: #2a1a3a",
+                "deferred": "background-color: #3a2a1a",
+                "failed": "background-color: #3a1a1a",
+            }
+            return colours.get(val, "")
+
+        st.dataframe(
+            jdf.style.applymap(colour_status, subset=["Status"]),
+            use_container_width=True,
+            hide_index=True,
+        )
+
+        # ── Job lifecycle controls ─────────────────────────────────────────────
+        st.caption("Transition a job through its lifecycle:")
+
+        job_ids = [j.get("job_id") for j in all_jobs if j.get("job_id")]
+
+        if job_ids:
+            lc_col1, lc_col2, lc_col3, lc_col4 = st.columns(4)
+
+            selected_jid = lc_col1.selectbox(
+                "Select job",
+                job_ids,
+                format_func=lambda x: x[:16]
+            )
+
+            # Start job
+            if lc_col2.button("▶ Start Job"):
+                try:
+                    result = api_post(
+                        f"/api/v1/jobs/{selected_jid}/start"
+                    )
+                    st.success(
+                        f"Job {selected_jid} is now RUNNING"
+                    )
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Could not start job: {e}")
+
+            # Complete job
+            if lc_col3.button("✅ Complete Job"):
+                try:
+                    result = api_post(
+                        f"/api/v1/jobs/{selected_jid}/complete"
+                    )
+                    st.success(
+                        f"Job {selected_jid} is now COMPLETED"
+                    )
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Could not complete job: {e}")
+
+            # Cancel job
+            if lc_col4.button("❌ Cancel Job"):
+                try:
+                    api_delete(
+                        f"/api/v1/jobs/{selected_jid}"
+                    )
+                    st.success(
+                        f"Job {selected_jid} was cancelled"
+                    )
+                    st.rerun()
+                except Exception as e:
+                    st.error(f"Could not cancel job: {e}")
+
+except Exception as e:
+    st.error(f"Could not load jobs from deployed API: {e}")
 
 st.markdown("---")
 st.caption(
