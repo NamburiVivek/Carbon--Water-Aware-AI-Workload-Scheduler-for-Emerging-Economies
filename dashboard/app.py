@@ -28,27 +28,27 @@ import requests
 
 API_BASE_URL = "https://carbon-water-aware-ai-workload-sche.vercel.app"
 
-# ── Yellow → orange colour palette ─────────────────────────────────────────
+# ── Black theme, yellow → orange accents ───────────────────────────────────
 COLOR_GRAD_START = "#FBBF24"    # amber / yellow — gradient start
 COLOR_GRAD_END = "#F97316"      # orange — gradient end
 COLOR_PRIMARY = "#F97316"       # orange — primary accent
-COLOR_PRIMARY_DARK = "#7C2D12"  # deep burnt-orange/brown — high-contrast text
+COLOR_PRIMARY_DARK = "#FDF1E3"  # warm off-white — headings/labels on dark cards
 COLOR_ACCENT = "#F97316"        # orange — positive / highlight signals
 COLOR_WARN = "#D97706"          # amber — caution
-COLOR_DANGER = "#DC2626"        # red — hard limits / negative
-COLOR_BG_PAGE = "#FFFBF5"       # warm off-white page background
-COLOR_BG_CARD = "#FFFFFF"       # card background
-COLOR_BORDER = "#F1DFC4"        # warm neutral border
-COLOR_TEXT = "#292118"          # primary body text (warm charcoal)
-COLOR_TEXT_MUTED = "#8A7860"    # muted warm grey-brown
+COLOR_DANGER = "#EF4444"        # red — hard limits / negative
+COLOR_BG_PAGE = "#0A0A0A"       # true black page background
+COLOR_BG_CARD = "#151515"       # dark card background, one step lighter than page
+COLOR_BORDER = "#2B2B2B"        # subtle dark border
+COLOR_TEXT = "#EDEAE3"          # primary body text (warm off-white)
+COLOR_TEXT_MUTED = "#9B948A"    # muted warm grey
 
 # Chart panels use a dark background + light text — this stays legible
 # regardless of the visitor's browser/OS theme (Streamlit's automatic
 # chart theming otherwise silently overrides light-mode chart colours).
-CHART_BG = "#1C140B"
+CHART_BG = COLOR_BG_CARD
 CHART_GRID = "rgba(255,255,255,0.10)"
-CHART_FONT = "#F5F1E8"
-CHART_MUTED = "#C9BBA5"
+CHART_FONT = COLOR_TEXT
+CHART_MUTED = COLOR_TEXT_MUTED
 
 
 def api_get(endpoint):
@@ -112,8 +112,8 @@ html, body, [class*="css"] {{
     --primary-color: {COLOR_GRAD_END} !important;
 }}
 
-/* ── Force one consistent light background app-wide (prevents it clashing
-      with the browser/OS dark theme) and set a sane default text colour ── */
+/* ── Force one consistent black background app-wide (prevents it clashing
+      with the browser/OS theme) and set a light default text colour ── */
 .stApp, [data-testid="stAppViewContainer"], [data-testid="stHeader"] {{
     background: {COLOR_BG_PAGE} !important;
     color: {COLOR_TEXT} !important;
@@ -131,7 +131,7 @@ p, span, label, div {{
 
 /* Sidebar */
 section[data-testid="stSidebar"] {{
-    background: #FFFFFF !important;
+    background: {COLOR_BG_CARD} !important;
     border-right: 1px solid {COLOR_BORDER};
 }}
 section[data-testid="stSidebar"] * {{
@@ -256,7 +256,7 @@ div.stButton > button[kind="primary"]:hover {{
 div.stButton > button[kind="secondary"] {{
     border: 1px solid {COLOR_BORDER};
     color: {COLOR_PRIMARY_DARK} !important;
-    background: #FFFFFF;
+    background: {COLOR_BG_CARD};
 }}
 div.stButton > button[kind="secondary"]:hover {{
     border-color: {COLOR_PRIMARY};
@@ -819,11 +819,11 @@ try:
         # Colour status — muted, professional palette
         def colour_status(val):
             colours = {
-                "scheduled": "background-color: #FEF3C7; color: #7C2D12;",
-                "running": "background-color: #FED7AA; color: #7C2D12;",
-                "completed": "background-color: #FFEDD5; color: #7C2D12;",
-                "deferred": "background-color: #FDE68A; color: #7C2D12;",
-                "failed": "background-color: #FCA5A5; color: #7C2D12;",
+                "scheduled": "background-color: #4A3009; color: #FBBF24;",
+                "running": "background-color: #7C2D12; color: #FDBA74;",
+                "completed": "background-color: #1F2937; color: #A7F3D0;",
+                "deferred": "background-color: #4A3009; color: #FDE68A;",
+                "failed": "background-color: #4C1D1D; color: #FCA5A5;",
             }
             return colours.get(val, "")
 
