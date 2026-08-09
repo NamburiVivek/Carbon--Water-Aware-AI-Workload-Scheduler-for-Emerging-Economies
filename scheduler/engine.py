@@ -9,7 +9,7 @@ Improvements over v1:
   - Priority urgency multiplier wired into deadline pressure
   - constraints.py drought alerts now gate scheduling
   - Soft constraint violations surfaced in ScoreBreakdown
-  - Carbon budget check integrated
+
 """
 
 from __future__ import annotations
